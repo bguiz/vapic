@@ -1,0 +1,29 @@
+{
+  "name": "vapic",
+  "version": "0.0.0",
+  "description": "Versioned API Cache",
+  "main": "vapic.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bguiz/vapic.git"
+  },
+  "keywords": [
+    "cache",
+    "redis",
+    "url",
+    "middleware",
+    "express"
+  ],
+  "author": "bguiz",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/bguiz/vapic/issues"
+  },
+  "homepage": "https://github.com/bguiz/vapic#readme",
+  "peerDependencies": {
+    "redis": "~2.6.2"
+  }
+}
