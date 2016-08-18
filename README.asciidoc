@@ -1,0 +1,81 @@
+= `vapic`
+:toc!:
+
+Versioned API Cache
+
+== Installation
+
+[source,bash]
+----
+npm install vapic --save
+----
+
+== Usage
+
+=== `express` middleware
+
+
+```javascript
+const vapic = require('vapic');
+const express = require('express');
+
+const vapicOptions = {
+	permittedAge: 3600, // one hour
+	cacheVersion: require('package.json').version,
+	redisClient: require('redis').createClient(),
+};
+
+const router = express.Router();
+router.get('/foo', vapic.expressMiddleware(vapicOptions), (req, res) => {
+  if (req.vapicError) {
+		res.status(404).json({
+			message: 'Data unavailable',
+		});
+		return;
+	} else {
+  	const data = JSON.parse(req.vapicResult);
+  	res.json(data);
+  	return;
+  }
+});
+
+module.exports = router;
+```
+
+Options:
+
+prefix:: Prefix for the cache key.
+  Defaults to `vapic:/`
+cacheVersion:: Cached version to use.
+  Defaults to `process.env.npm_package_version`
+permittedAge:: The number of seconds the `Cache-Control` header in the response
+  should set its `max-age` to.
+  Defaults to `60` (One minute).
+logger:: An object that has an `error` function.
+  Defaults to `console`
+redisClient:: A Redis client instance.
+  Defaults to `require('redis').createClient()`.
+
+== Development
+
+If you would like to contribute,
+fork the git repo,
+and create a branch off the *develop* branch,
+and submit your pull request when you are done.
+
+This repo uses the *git flow* branching strategy.
+
+To run tests:
+
+[source,bash]
+----
+npm run test
+----
+
+== Author
+
+http://bguiz.com[Brendan Graetz^]
+
+== Licence
+
+GPL-3.0
