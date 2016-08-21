@@ -12,10 +12,58 @@ npm install vapic --save
 
 == Usage
 
+=== `.set()`
+
+Stores the value in the cache, against the current version.
+
+[source,javascript]
+----
+const vapic = require('vapic');
+
+vapic.set({
+	url: '/foo',
+	value: JSON.stringify({
+		foo: 123,
+	}),
+	maxVersions: 3, // <1>
+	redisClient: require('redis').createClient(),
+}, (err, result) => { /* ... */ });
+----
+<1> If `maxVersions` is set, `cullOld()` is automatically called.
+
+Options:
+
+url:: Used to construct the cache key
+value:: The value to store in the cache
+maxVersions:: The maximum number of cached versions to store
+
+=== `.cullOld()`
+
+Deletes older versions that have been cached.
+The versions to keep/ remove are determined using `semver`.
+
+[source,javascript]
+----
+const vapic = require('vapic');
+
+vapic.cullOld({
+	url: '/foo',
+	value: JSON.stringify({
+		foo: 123,
+	}),
+	maxVersions: 3,
+	redisClient: require('redis').createClient(),
+}, (err, result) => { /* ... */ });
+----
+
+Options:
+
+Same as `.set()`.
+
 === `express` middleware
 
-
-```javascript
+[source,javascript]
+----
 const vapic = require('vapic');
 const express = require('express');
 
@@ -40,14 +88,15 @@ router.get('/foo', vapic.expressMiddleware(vapicOptions), (req, res) => {
 });
 
 module.exports = router;
-```
+----
 
 Options:
 
 prefix:: Prefix for the cache key.
   Defaults to `vapic:/`
 cacheVersion:: Cached version to use.
-  Defaults to `process.env.npm_package_version`
+  Defaults to the version number of the current module,
+	or `process.env.npm_package_version`
 permittedAge:: The number of seconds the `Cache-Control` header in the response
   should set its `max-age` to.
   Defaults to `60` (One minute).
