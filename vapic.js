@@ -1,34 +1,39 @@
 'use strict';
 
 module.exports = {
-	set: setVersionInCache,
+	get: getFromCache,
+	set: setInCache,
 	cullOld: cullOldVersionsFromCache,
 	expressMiddleware,
 };
 
+// Get version from 3 different possible places, falling back from each one to the next:
+// 1. `npm run` inserted environment variable
+// 2. `package.json` in the current working directory
+// 3. This module's own `package.json`
 let packageJsonVersion = process.env.npm_package_version;
 if (!packageJsonVersion) {
 	let packageJson;
-	const path = require('path');
 	try {
+		const path = require('path');
 	  packageJson = require(path.resolve(process.cwd(), './package.json'));
 	} catch (err) {
-		packageJson = require('package.json').version;
+		packageJson = require('./package.json');
 	}
 	packageJsonVersion = packageJson.version;
 }
 
 const defaults = {
 	prefix: 'vapic:/',
-	//TODO find a way to read this from package.json
 	cacheVersion: packageJsonVersion,
 	permittedAge: 60, // One minute
 	logger: console,
 	redisClient: null,
 };
 
-function setVersionInCache (options, errback) {
+function setInCache (options, errback) {
 	defaultsForOptions(options);
+	//TODO move away from url and toward cacheKey instead
 	if (!options.url) {
 		errback('url unspecified');
 		return;
@@ -62,9 +67,9 @@ function cullOldVersionsFromCache (options, errback) {
 		return;
 	}
 
-	const vapicKey = `${options.prefix}${options.url}`;
+	const cacheKey = `${options.prefix}${options.url}`;
 
-	options.redisClient.hkeys(vapicKey, (err, versions) => {
+	options.redisClient.hkeys(cacheKey, (err, versions) => {
 		if (err) {
 			errback(err);
 			return;
@@ -74,7 +79,7 @@ function cullOldVersionsFromCache (options, errback) {
 			versions = versions.sort(semver.compare);
 			const versionsToRemove = versions.slice(0, versions.length - maxVersions);
 
-			options.redisClient.hdel(vapicKey, versionsToRemove, (err, removedCount) => {
+			options.redisClient.hdel(cacheKey, versionsToRemove, (err, removedCount) => {
 				errback(undefined, {
 					versions,
 					versionsToRemove: versionsToRemove,
@@ -90,23 +95,41 @@ function cullOldVersionsFromCache (options, errback) {
 	});
 }
 
+function getFromCache (options, errback) {
+	defaultsForOptions(options);
+	if (!options.cacheKey) {
+		errback('cacheKey unspecified');
+		return;
+	}
+	const cacheKey = options.cacheKey || `${options.prefix}${options.url}`;
+	options.redisClient.hget(cacheKey, options.cacheVersion, (err, result) => {
+		if (err || !result) {
+			let errToReturn = {
+				cacheKey,
+				cacheVersion: options.cacheVersion,
+				err,
+				result,
+			};
+			options.logger.error('Cache miss on redis', errToReturn);
+			errback(errToReturn);
+			return;
+		} else {
+			errback(undefined, result);
+			return;
+		}
+	});
+}
+
 function expressMiddleware (options) {
 	defaultsForOptions(options);
 
-	return vapicExpressMiddlware;
+	return vapicExpressMiddleware;
 
-	function vapicExpressMiddlware (req, res, next) {
-		const cacheVersion = options.cacheVersion;
-		const cacheKey = `${options.prefix}${options.url || req.originalUrl}`;
-		options.redisClient.hget(cacheKey, cacheVersion, (err, result) => {
-			if (err || !result) {
-				options.logger.error('Cache miss on redis', { cacheKey, cacheVersion, err, result });
-				req.vapicError = {
-					cacheKey,
-					cacheVersion,
-					err,
-					result,
-				};
+	function vapicExpressMiddleware (req, res, next) {
+		options.cacheKey = options.cacheKey || `${options.prefix}${options.url || req.originalUrl}`;
+		getFromCache(options, (err, result) => {
+			if (err) {
+				req.vapicError = err;
 				next();
 				return;
 			} else {
