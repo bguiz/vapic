@@ -1,6 +1,6 @@
 {
   "name": "vapic",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Versioned API Cache",
   "main": "vapic.js",
   "scripts": {
