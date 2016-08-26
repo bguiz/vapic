@@ -44,7 +44,9 @@ function setInCache (options, errback) {
 		return;
 	}
 	const hsetCallback = (options.maxVersions) ? ontoCull : errback;
-	options.redisClient.hset(`${options.prefix}${options.url}`, options.cacheVersion, options.value, hsetCallback);
+	options.cacheKey = options.cacheKey || `${options.prefix}${options.url}`;
+	console.log('setInCache', options.cacheKey, options.cacheVersion, options.value);
+	options.redisClient.hset(options.cacheKey, options.cacheVersion, options.value, hsetCallback);
 
 	function ontoCull(err, result) {
 		if (err) {
