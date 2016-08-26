@@ -97,6 +97,9 @@ prefix:: Prefix for the cache key.
 cacheVersion:: Cached version to use.
   Defaults to the version number of the current module,
 	or `process.env.npm_package_version`
+versionMatchType:: How to determine which version to match. +
+  When `exact` (the default), only an exact version match with the current version will be returned. +
+	When `latestUpToCurrent`, the latest version that is less than or equal to the current version will be returned.
 permittedAge:: The number of seconds the `Cache-Control` header in the response
   should set its `max-age` to.
   Defaults to `60` (One minute).

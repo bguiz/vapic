@@ -29,6 +29,7 @@ const defaults = {
 	permittedAge: 60, // One minute
 	logger: console,
 	redisClient: null,
+	versionMatchType: 'exact',
 };
 
 function setInCache (options, errback) {
@@ -97,6 +98,21 @@ function cullOldVersionsFromCache (options, errback) {
 
 function getFromCache (options, errback) {
 	defaultsForOptions(options);
+	switch (options.versionMatchType) {
+		case 'exact':
+			getExactVersionFromCache(options, errback);
+			return;
+		case 'latestUpToCurrent':
+			getLatestUpToCurrentVersionFromCache(options, errback);
+			return;
+		default:
+			errback(`Unrecognised version match type: ${options.versionMatchType}`);
+		return;
+	}
+}
+
+function getExactVersionFromCache (options, errback) {
+	defaultsForOptions(options);
 	if (!options.cacheKey) {
 		errback('cacheKey unspecified');
 		return;
@@ -117,6 +133,37 @@ function getFromCache (options, errback) {
 			errback(undefined, result);
 			return;
 		}
+	});
+}
+
+function getLatestUpToCurrentVersionFromCache(options, errback) {
+	defaultsForOptions(options);
+	const cacheKey = options.cacheKey || `${options.prefix}${options.url}`;
+	options.redisClient.hkeys(cacheKey, (err, versions) => {
+		if (err) {
+			errback(err);
+			return;
+		}
+		const semver = require('semver');
+		versions = versions.sort(semver.compare);
+		let versionIdx, version, selectedVersion;
+		for (versionIdx = 0; versionIdx < versions.length; ++versionIdx) {
+			version = versions[versionIdx];
+			if (semver.lte(version, options.cacheVersion)) {
+				selectedVersion = version;
+			}
+		}
+		if (!selectedVersion) {
+			let errToReturn = {
+				cacheKey: options.cacheKey,
+				cacheVersion: options.cacheVersion,
+				availableVersions: versions,
+			};
+			errback(errToReturn);
+			return;
+		}
+		options.cacheVersion = selectedVersion;
+		getExactVersionFromCache(options, errback);
 	});
 }
 
