@@ -20,6 +20,10 @@ describe('[Set]', () => {
 			id: 'vapic://vapic/mocha/tests/set/doesNotHaveCurrentVersion',
 			versions: ['0.0.2', '0.0.4', '0.0.6'],
 		},
+		{
+			id: 'vapic://vapic/mocha/tests/set/forSameDetection',
+			versions: ['0.0.2', '0.0.4', '0.0.6'],
+		},
 	];
 
 	before(testUtil.waitForRedis);
@@ -46,7 +50,6 @@ describe('[Set]', () => {
 			vapic.set(vapicOptions, (err, result) => {
 				expect(err).to.not.exist();
 				expect(vapicOptions.cacheKey).to.equal(`vapic:/${vapicOptions.url}`);
-				console.log('get  Cache', vapicOptions.cacheKey, vapicOptions.cacheVersion);
 				redisClient.hget(vapicOptions.cacheKey, vapicOptions.cacheVersion, (err2, result2) => {
 					expect(err2).to.not.exist();
 					expect(result2).to.equal(vapicOptions.value);
@@ -66,7 +69,6 @@ describe('[Set]', () => {
 			vapic.set(vapicOptions, (err, result) => {
 				expect(err).to.not.exist();
 				expect(vapicOptions.cacheKey).to.equal(`vapic:/${vapicOptions.url}`);
-				console.log('get  Cache', vapicOptions.cacheKey, vapicOptions.cacheVersion);
 				redisClient.hget(vapicOptions.cacheKey, vapicOptions.cacheVersion, (err2, result2) => {
 					expect(err2).to.not.exist();
 					expect(result2).to.equal(vapicOptions.value);
@@ -86,7 +88,6 @@ describe('[Set]', () => {
 			vapic.set(vapicOptions, (err, result) => {
 				expect(err).to.not.exist();
 				expect(vapicOptions.cacheKey).to.equal(`vapic:/${vapicOptions.url}`);
-				console.log('get  Cache', vapicOptions.cacheKey, vapicOptions.cacheVersion);
 				redisClient.hget(vapicOptions.cacheKey, vapicOptions.cacheVersion, (err2, result2) => {
 					expect(err2).to.not.exist();
 					expect(result2).to.equal(vapicOptions.value);
@@ -116,7 +117,6 @@ describe('[Set]', () => {
 					removedCount: 1,
 				});
 				expect(vapicOptions.cacheKey).to.equal(`vapic:/${vapicOptions.url}`);
-				console.log('get  Cache', vapicOptions.cacheKey, vapicOptions.cacheVersion);
 				redisClient.hkeys(vapicOptions.cacheKey, (err2, result2) => {
 					expect(err2).to.not.exist();
 					expect(result2).to.deep.equal(['0.0.2', '0.0.4', '0.0.6']);
@@ -142,7 +142,6 @@ describe('[Set]', () => {
 					// removedCount: 0,
 				});
 				expect(vapicOptions.cacheKey).to.equal(`vapic:/${vapicOptions.url}`);
-				console.log('get  Cache', vapicOptions.cacheKey, vapicOptions.cacheVersion);
 				redisClient.hkeys(vapicOptions.cacheKey, (err2, result2) => {
 					expect(err2).to.not.exist();
 					expect(result2).to.deep.equal(['0.0.2', '0.0.4', '0.0.6']);
@@ -168,7 +167,6 @@ describe('[Set]', () => {
 					removedCount: 1,
 				});
 				expect(vapicOptions.cacheKey).to.equal(`vapic:/${vapicOptions.url}`);
-				console.log('get  Cache', vapicOptions.cacheKey, vapicOptions.cacheVersion);
 				redisClient.hkeys(vapicOptions.cacheKey, (err2, result2) => {
 					expect(err2).to.not.exist();
 					expect(result2).to.deep.equal(['0.0.4', '0.0.6', '0.0.7']);
@@ -194,7 +192,6 @@ describe('[Set]', () => {
 					removedCount: 2,
 				});
 				expect(vapicOptions.cacheKey).to.equal(`vapic:/${vapicOptions.url}`);
-				console.log('get  Cache', vapicOptions.cacheKey, vapicOptions.cacheVersion);
 				redisClient.hkeys(vapicOptions.cacheKey, (err2, result2) => {
 					expect(err2).to.not.exist();
 					expect(result2).to.deep.equal(['0.0.7', '0.0.8']);
@@ -205,5 +202,69 @@ describe('[Set]', () => {
 
 	});
 
+	describe('[Set with skip when same as latest]', () => {
+
+		it('should set value that is not the same as previous version', (done) => {
+			const redisClient = testUtil.getRedisClient();
+			const vapicOptions = {
+				url: '/vapic/mocha/tests/set/forSameDetection',
+				value: 'content same',
+				cacheVersion: '0.0.8',
+				versionMatchType: 'skipWhenSameAsLatest',
+				redisClient,
+			};
+			vapic.set(vapicOptions, (err, result) => {
+				expect(err).to.not.exist();
+				expect(vapicOptions.cacheKey).to.equal(`vapic:/${vapicOptions.url}`);
+				redisClient.hkeys(vapicOptions.cacheKey, (err2, result2) => {
+					expect(err2).to.not.exist();
+					expect(result2).to.deep.equal(['0.0.2', '0.0.4', '0.0.6', '0.0.8']);
+					done();
+				});
+			});
+		});
+
+		it('should set value that is the same as previous version', (done) => {
+			const redisClient = testUtil.getRedisClient();
+			const vapicOptions = {
+				url: '/vapic/mocha/tests/set/forSameDetection',
+				value: 'content same',
+				cacheVersion: '0.0.9',
+				versionMatchType: 'skipWhenSameAsLatest',
+				redisClient,
+			};
+			vapic.set(vapicOptions, (err, result) => {
+				expect(err).to.not.exist();
+				expect(result).to.deep.equal({
+					versions: ['0.0.2', '0.0.4', '0.0.6', '0.0.8'],
+					latestCachedVersion: '0.0.8',
+					equivalentVersion: vapicOptions.cacheVersion,
+				});
+				expect(vapicOptions.cacheKey).to.equal(`vapic:/${vapicOptions.url}`);
+				redisClient.hkeys(vapicOptions.cacheKey, (err2, result2) => {
+					expect(err2).to.not.exist();
+					expect(result2).to.deep.equal(['0.0.2', '0.0.4', '0.0.6', '0.0.8']);
+					done();
+				});
+			});
+		});
+
+		it('should get the previous version with same content when requesting the current version', (done) => {
+			const redisClient = testUtil.getRedisClient();
+			const vapicOptions = {
+				url: '/vapic/mocha/tests/set/forSameDetection',
+				cacheVersion: '0.0.9',
+				versionMatchType: 'latestUpToCurrent',
+				redisClient,
+			};
+			vapic.get(vapicOptions, (err, result) => {
+				expect(err).to.not.exist();
+				expect(result).to.deep.equal('content same');
+				expect(vapicOptions.cacheKey).to.equal(`vapic:/${vapicOptions.url}`);
+				done();
+			});
+		});
+
+	});
 
 });
