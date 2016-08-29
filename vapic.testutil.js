@@ -49,7 +49,6 @@ function initRedisClient(done) {
 
 function clearKeys(keys) {
 	return function clearKeysImpl (done) {
-		console.log('clearKeys...');
 		righto.iterate(function* (reject) {
 			let err, result;
 			let key;
@@ -64,7 +63,6 @@ function clearKeys(keys) {
 
 function setUpKeys (keys) {
 	return function setUpKeys (done) {
-		console.log('setUpKeys...');
 		righto.iterate(function* (reject) {
 			let err, result;
 			let key, version;

@@ -43,9 +43,22 @@ function setInCache (options, errback) {
 		errback('value unspecified');
 		return;
 	}
-	const hsetCallback = (options.maxVersions) ? ontoCull : errback;
 	options.cacheKey = options.cacheKey || `${options.prefix}${options.url}`;
-	console.log('setInCache', options.cacheKey, options.cacheVersion, options.value);
+	switch(options.versionMatchType) {
+		case 'exact':
+			setExactVersionInCache(options, errback);
+			return;
+		case 'skipWhenSameAsLatest':
+			setSkipWhenSameAsLatestInCache(options, errback);
+			return;
+		default:
+			errback(`Unrecognised version match type: ${options.versionMatchType}`);
+			return;
+	}
+}
+
+function setExactVersionInCache (options, errback) {
+	const hsetCallback = (options.maxVersions) ? ontoCull : errback;
 	options.redisClient.hset(options.cacheKey, options.cacheVersion, options.value, hsetCallback);
 
 	function ontoCull(err, result) {
@@ -57,8 +70,43 @@ function setInCache (options, errback) {
 	}
 }
 
+function setSkipWhenSameAsLatestInCache(options, errback) {
+	getSortedVersionsFromCache(options, (err, versions) => {
+		if (err) {
+			errback(err);
+			return;
+		}
+		if (versions.length < 1) {
+			setExactVersionInCache(options, errback);
+			return;
+		}
+		const latestCachedVersion = versions[versions.length - 1];
+		getFromCache({
+			versionMatchType: 'exact',
+			redisClient: options.redisClient,
+			cacheKey: options.cacheKey,
+			cacheVersion: latestCachedVersion,
+		}, (err, value) => {
+			if (err) {
+				errback(err);
+				return;
+			}
+			if (value !== options.value) {
+				setExactVersionInCache(options, errback);
+				return;
+			} else {
+				errback(undefined, {
+					versions,
+					latestCachedVersion,
+					equivalentVersion: options.cacheVersion,
+				});
+				return;
+			}
+		});
+	});
+}
+
 function cullOldVersionsFromCache (options, errback) {
-	console.log('cullOldVersionsFomCache');
 	defaultsForOptions(options);
 	if (!options.url) {
 		errback('url unspecified');
@@ -138,16 +186,28 @@ function getExactVersionFromCache (options, errback) {
 	});
 }
 
-function getLatestUpToCurrentVersionFromCache(options, errback) {
-	defaultsForOptions(options);
-	const cacheKey = options.cacheKey || `${options.prefix}${options.url}`;
-	options.redisClient.hkeys(cacheKey, (err, versions) => {
+function getSortedVersionsFromCache(options, errback) {
+	options.redisClient.hkeys(options.cacheKey, (err, versions) => {
 		if (err) {
 			errback(err);
 			return;
 		}
 		const semver = require('semver');
 		versions = versions.sort(semver.compare);
+		errback(undefined, versions);
+		return;
+	});
+}
+
+function getLatestUpToCurrentVersionFromCache(options, errback) {
+	defaultsForOptions(options);
+	options.cacheKey = options.cacheKey || `${options.prefix}${options.url}`;
+	getSortedVersionsFromCache(options, (err, versions) => {
+		if (err) {
+			errback(err);
+			return;
+		}
+		const semver = require('semver');
 		let versionIdx, version, selectedVersion;
 		for (versionIdx = 0; versionIdx < versions.length; ++versionIdx) {
 			version = versions[versionIdx];
