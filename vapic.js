@@ -1,10 +1,13 @@
 'use strict';
 
+const vapicUtil = require('./util.js');
+
 module.exports = {
 	get: getFromCache,
 	set: setInCache,
 	cullOld: cullOldVersionsFromCache,
 	expressMiddleware,
+	util: vapicUtil,
 };
 
 // Get version from 3 different possible places, falling back from each one to the next:
@@ -229,13 +232,28 @@ function getLatestUpToCurrentVersionFromCache(options, errback) {
 	});
 }
 
-function expressMiddleware (options) {
-	defaultsForOptions(options);
+function expressMiddleware (middlewareOptions) {
+	defaultsForOptions(middlewareOptions);
 
 	return vapicExpressMiddleware;
 
 	function vapicExpressMiddleware (req, res, next) {
+		const options = Object.assign({}, middlewareOptions);
 		options.cacheKey = options.cacheKey || `${options.prefix}${options.url || req.originalUrl}`;
+		if (options.readVersionFromHeader) {
+			const vapicHeader = req.get('vapic');
+			let vapicOptionsFromHeader;
+			if (typeof vapicHeader === 'string' && vapicHeader.length > 0) {
+				try {
+					vapicOptionsFromHeader = vapicUtil.base64JsonToObject(vapicHeader);
+				} catch (ex) {
+					options.logger.error('failed to parse header vapic options', vapicHeader);
+					res.setHeader('vapic-warning', `Unable to parse: ${vapicHeader}`);
+				}
+			}
+			options.cacheVersion = (vapicOptionsFromHeader && vapicOptionsFromHeader.version) || options.cacheVersion;
+		}
+
 		getFromCache(options, (err, result) => {
 			if (err) {
 				req.vapicError = err;
@@ -244,6 +262,9 @@ function expressMiddleware (options) {
 			} else {
 				req.vapicResult = result;
 				res.setHeader('Cache-Control', `public, max-age=${options.permittedAge}`);
+				res.setHeader('vapic', vapicUtil.objectToBase64Json({
+					version: options.cacheVersion,
+				}));
 				next();
 				return;
 			}
