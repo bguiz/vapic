@@ -232,14 +232,14 @@ function getLatestUpToCurrentVersionFromCache(options, errback) {
 	});
 }
 
-function expressMiddleware (options) {
-	defaultsForOptions(options);
+function expressMiddleware (middlewareOptions) {
+	defaultsForOptions(middlewareOptions);
 
 	return vapicExpressMiddleware;
 
 	function vapicExpressMiddleware (req, res, next) {
-		options.cacheKey = `${options.prefix}${options.url || req.originalUrl}`;
-		options.cacheVersion = defaults.cacheVersion;
+		const options = Object.assign({}, middlewareOptions);
+		options.cacheKey = options.cacheKey || `${options.prefix}${options.url || req.originalUrl}`;
 		if (options.readVersionFromHeader) {
 			const vapicHeader = req.get('vapic');
 			let vapicOptionsFromHeader;
@@ -252,9 +252,6 @@ function expressMiddleware (options) {
 				}
 			}
 			options.cacheVersion = (vapicOptionsFromHeader && vapicOptionsFromHeader.version) || options.cacheVersion;
-			res.setHeader('vapic', vapicUtil.objectToBase64Json({
-				version: options.cacheVersion,
-			}));
 		}
 
 		getFromCache(options, (err, result) => {

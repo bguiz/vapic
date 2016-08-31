@@ -14,7 +14,7 @@ describe('[Express Middleware]', () => {
 	const keys = [
 		{
 			id: 'vapic://vapic/mocha/tests/expressMiddleware/hasCurrentVersion',
-			versions: ['0.0.0', '0.0.1', packageJson.version],
+			versions: ['0.0.0', '0.0.2', packageJson.version],
 		},
 		{
 			id: 'vapic://vapic/mocha/tests/expressMiddleware/doesNotHaveCurrentVersion',
@@ -54,13 +54,14 @@ describe('[Express Middleware]', () => {
 			};
 			middleware(req, res, next);
 			function next() {
-				expect(req.vapicError).to.not.exist()
-				expect(res.setHeader.callCount).to.equal(1);
-				const spyCall = res.setHeader.getCall(0);
-				const defaultPermittedAge = 60;
-				expect(spyCall.args[0]).to.equal('Cache-Control');
-				expect(spyCall.args[1]).to.equal(`public, max-age=${defaultPermittedAge}`);
+				expect(req.vapicError).to.not.exist();
 				expect(req.vapicResult).to.equal(`{"version":"${packageJson.version}"}`);
+				const defaultPermittedAge = 60;
+				expect(res.setHeader.callCount).to.equal(2);
+				expect(res.setHeader.getCall(0).args).to.deep.equal(
+					['Cache-Control', `public, max-age=${defaultPermittedAge}`]);
+				expect(res.setHeader.getCall(1).args).to.deep.equal(
+					['vapic', vapic.util.objectToBase64Json({version:packageJson.version})]);
 				done();
 			}
 		});
@@ -72,8 +73,8 @@ describe('[Express Middleware]', () => {
 			};
 			const vapicCustomOptions = {
 				prefix: 'custom-prefix:/',
-				cacheVersion: '99.99.99',
 				permittedAge: 120,
+				cacheVersion: '99.99.99',
 				logger: fakeLogger,
 				redisClient,
 			};
@@ -86,13 +87,15 @@ describe('[Express Middleware]', () => {
 			};
 			middleware(req, res, next);
 			function next() {
-				expect(req.vapicError).to.not.exist()
+				expect(req.vapicError).to.not.exist();
+				expect(req.vapicResult).to.equal(`{"version":"${vapicCustomOptions.cacheVersion}"}`);
 				expect(fakeLogger.error.callCount).to.equal(0);
-				expect(res.setHeader.callCount).to.equal(1);
-				const setHeaderSpyCall = res.setHeader.getCall(0);
-				expect(setHeaderSpyCall.args[0]).to.equal('Cache-Control');
-				expect(setHeaderSpyCall.args[1]).to.equal(`public, max-age=${vapicCustomOptions.permittedAge}`);
-				expect(req.vapicResult).to.equal('{"version":"99.99.99"}');
+				const defaultPermittedAge = 60;
+				expect(res.setHeader.callCount).to.equal(2);
+				expect(res.setHeader.getCall(0).args).to.deep.equal(
+					['Cache-Control', `public, max-age=${vapicCustomOptions.permittedAge}`]);
+				expect(res.setHeader.getCall(1).args).to.deep.equal(
+					['vapic', vapic.util.objectToBase64Json({version:vapicCustomOptions.cacheVersion})]);
 				done();
 			}
 		});
@@ -110,7 +113,7 @@ describe('[Express Middleware]', () => {
 			};
 			middleware(req, res, next);
 			function next() {
-				expect(req.vapicResult).to.not.exist()
+				expect(req.vapicResult).to.not.exist();
 				expect(res.setHeader.callCount).to.equal(0);
 				expect(req.vapicError).to.be.an('object');
 				expect(req.vapicError.cacheKey).to.equal(`vapic:/${req.originalUrl}`);
@@ -132,7 +135,7 @@ describe('[Express Middleware]', () => {
 			};
 			middleware(req, res, next);
 			function next() {
-				expect(req.vapicResult).to.not.exist()
+				expect(req.vapicResult).to.not.exist();
 				expect(res.setHeader.callCount).to.equal(0);
 				expect(req.vapicError).to.be.an('object');
 				expect(req.vapicError.cacheKey).to.equal(`vapic:/${req.originalUrl}`);
@@ -161,13 +164,14 @@ describe('[Express Middleware]', () => {
 			};
 			middleware(req, res, next);
 			function next() {
-				const defaultPermittedAge = 60;
-				expect(req.vapicError).to.not.exist()
-				expect(res.setHeader.callCount).to.equal(1);
-				const setHeaderSpyCall = res.setHeader.getCall(0);
-				expect(setHeaderSpyCall.args[0]).to.equal('Cache-Control');
-				expect(setHeaderSpyCall.args[1]).to.equal(`public, max-age=${defaultPermittedAge}`);
+				expect(req.vapicError).to.not.exist();
 				expect(req.vapicResult).to.equal('{"version":"0.0.6"}');
+				const defaultPermittedAge = 60;
+				expect(res.setHeader.callCount).to.equal(2);
+				expect(res.setHeader.getCall(0).args).to.deep.equal(
+					['Cache-Control', `public, max-age=${defaultPermittedAge}`]);
+				expect(res.setHeader.getCall(1).args).to.deep.equal(
+					['vapic', vapic.util.objectToBase64Json({version:'0.0.6'})]);
 				done();
 			}
 		});
@@ -188,13 +192,14 @@ describe('[Express Middleware]', () => {
 			};
 			middleware(req, res, next);
 			function next() {
-				const defaultPermittedAge = 60;
-				expect(req.vapicError).to.not.exist()
-				expect(res.setHeader.callCount).to.equal(1);
-				const setHeaderSpyCall = res.setHeader.getCall(0);
-				expect(setHeaderSpyCall.args[0]).to.equal('Cache-Control');
-				expect(setHeaderSpyCall.args[1]).to.equal(`public, max-age=${defaultPermittedAge}`);
+				expect(req.vapicError).to.not.exist();
 				expect(req.vapicResult).to.equal('{"version":"0.0.4"}');
+				const defaultPermittedAge = 60;
+				expect(res.setHeader.callCount).to.equal(2);
+				expect(res.setHeader.getCall(0).args).to.deep.equal(
+					['Cache-Control', `public, max-age=${defaultPermittedAge}`]);
+				expect(res.setHeader.getCall(1).args).to.deep.equal(
+					['vapic', vapic.util.objectToBase64Json({version:'0.0.4'})]);
 				done();
 			}
 		});
@@ -215,13 +220,14 @@ describe('[Express Middleware]', () => {
 			};
 			middleware(req, res, next);
 			function next() {
-				const defaultPermittedAge = 60;
-				expect(req.vapicError).to.not.exist()
-				expect(res.setHeader.callCount).to.equal(1);
-				const setHeaderSpyCall = res.setHeader.getCall(0);
-				expect(setHeaderSpyCall.args[0]).to.equal('Cache-Control');
-				expect(setHeaderSpyCall.args[1]).to.equal(`public, max-age=${defaultPermittedAge}`);
+				expect(req.vapicError).to.not.exist();
 				expect(req.vapicResult).to.equal('{"version":"0.0.4"}');
+				const defaultPermittedAge = 60;
+				expect(res.setHeader.callCount).to.equal(2);
+				expect(res.setHeader.getCall(0).args).to.deep.equal(
+					['Cache-Control', `public, max-age=${defaultPermittedAge}`]);
+				expect(res.setHeader.getCall(1).args).to.deep.equal(
+					['vapic', vapic.util.objectToBase64Json({version:'0.0.4'})]);
 				done();
 			}
 		});
@@ -243,12 +249,14 @@ describe('[Express Middleware]', () => {
 			middleware(req, res, next);
 			function next() {
 				const defaultPermittedAge = 60;
-				expect(req.vapicError).to.not.exist()
-				expect(res.setHeader.callCount).to.equal(1);
-				const setHeaderSpyCall = res.setHeader.getCall(0);
-				expect(setHeaderSpyCall.args[0]).to.equal('Cache-Control');
-				expect(setHeaderSpyCall.args[1]).to.equal(`public, max-age=${defaultPermittedAge}`);
+				expect(req.vapicError).to.not.exist();
 				expect(req.vapicResult).to.equal('{"version":"0.0.2"}');
+				expect(res.setHeader.callCount).to.equal(2);
+				const setHeaderSpyCall = res.setHeader.getCall(0);
+				expect(setHeaderSpyCall.args[0]).to.equal(
+					'Cache-Control');
+				expect(setHeaderSpyCall.args[1]).to.equal(
+					`public, max-age=${defaultPermittedAge}`);
 				done();
 			}
 		});
@@ -269,13 +277,14 @@ describe('[Express Middleware]', () => {
 			};
 			middleware(req, res, next);
 			function next() {
-				const defaultPermittedAge = 60;
-				expect(req.vapicError).to.not.exist()
-				expect(res.setHeader.callCount).to.equal(1);
-				const setHeaderSpyCall = res.setHeader.getCall(0);
-				expect(setHeaderSpyCall.args[0]).to.equal('Cache-Control');
-				expect(setHeaderSpyCall.args[1]).to.equal(`public, max-age=${defaultPermittedAge}`);
+				expect(req.vapicError).to.not.exist();
 				expect(req.vapicResult).to.equal('{"version":"0.0.2"}');
+				const defaultPermittedAge = 60;
+				expect(res.setHeader.callCount).to.equal(2);
+				expect(res.setHeader.getCall(0).args).to.deep.equal(
+					['Cache-Control', `public, max-age=${defaultPermittedAge}`]);
+				expect(res.setHeader.getCall(1).args).to.deep.equal(
+					['vapic', vapic.util.objectToBase64Json({version:'0.0.2'})]);
 				done();
 			}
 		});
@@ -302,6 +311,83 @@ describe('[Express Middleware]', () => {
 				expect(req.vapicError.cacheKey).to.equal(`vapic:/${req.originalUrl}`);
 				expect(req.vapicError.cacheVersion).to.equal(vapicCustomOptions.cacheVersion);
 				expect(req.vapicError.availableVersions).to.deep.equal(['0.0.2', '0.0.4', '0.0.6']);
+				done();
+			}
+		});
+
+	});
+
+	describe('[Vapic HTTP request header specified version]', () => {
+
+		function getStubbedReq(value) {
+			const req = {
+				originalUrl: '/vapic/mocha/tests/expressMiddleware/hasCurrentVersion',
+				get: () => {},
+			};
+			sinon.stub(req, 'get', (key) => {
+				switch (key.toLowerCase()) {
+					case 'vapic':
+						return value;
+					default:
+						return undefined;
+				}
+			});
+			return req;
+		}
+
+		it('should passthrough and get default version with invalid header value', (done) => {
+			const redisClient = testUtil.getRedisClient();
+			const middleware = vapic.expressMiddleware({
+				versionMatchType: 'latestUpToCurrent',
+				readVersionFromHeader: true,
+				redisClient,
+			});
+			const invalidBase64JsonString = 'foobar';
+			const req = getStubbedReq(invalidBase64JsonString);
+			const res = {
+				setHeader: sinon.spy(),
+			};
+			middleware(req, res, next);
+			function next() {
+				const defaultPermittedAge = 60;
+				expect(req.vapicError).to.not.exist();
+				expect(req.vapicResult).to.be.a('string');
+				expect(req.vapicResult).to.deep.equal(`{"version":"${packageJson.version}"}`);
+				expect(res.setHeader.callCount).to.equal(3);
+				expect(res.setHeader.getCall(0).args).to.deep.equal(
+					['vapic-warning', `Unable to parse: ${invalidBase64JsonString}`]);
+				expect(res.setHeader.getCall(1).args).to.deep.equal(
+					['Cache-Control', `public, max-age=${defaultPermittedAge}`]);
+				expect(res.setHeader.getCall(2).args).to.deep.equal(
+					['vapic', vapic.util.objectToBase64Json({version:packageJson.version})]);
+				done();
+			}
+		});
+
+		it('should request an earlier version', (done) => {
+			const redisClient = testUtil.getRedisClient();
+			const middleware = vapic.expressMiddleware({
+				versionMatchType: 'latestUpToCurrent',
+				readVersionFromHeader: true,
+				redisClient,
+			});
+			const req = getStubbedReq(vapic.util.objectToBase64Json({
+				version: '0.0.1',
+			}));
+			const res = {
+				setHeader: sinon.spy(),
+			};
+			middleware(req, res, next);
+			function next() {
+				const defaultPermittedAge = 60;
+				expect(req.vapicError).to.not.exist();
+				expect(req.vapicResult).to.be.a('string');
+				expect(req.vapicResult).to.deep.equal('{"version":"0.0.0"}');
+				expect(res.setHeader.callCount).to.equal(2);
+				expect(res.setHeader.getCall(0).args).to.deep.equal(
+					['Cache-Control', `public, max-age=${defaultPermittedAge}`]);
+				expect(res.setHeader.getCall(1).args).to.deep.equal(
+					['vapic', vapic.util.objectToBase64Json({version:'0.0.0'})]);
 				done();
 			}
 		});
