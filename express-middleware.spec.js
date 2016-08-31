@@ -60,7 +60,7 @@ describe('[Express Middleware]', () => {
 				const defaultPermittedAge = 60;
 				expect(spyCall.args[0]).to.equal('Cache-Control');
 				expect(spyCall.args[1]).to.equal(`public, max-age=${defaultPermittedAge}`);
-				expect(req.vapicResult).to.equal(`value for ${packageJson.version}`);
+				expect(req.vapicResult).to.equal(`{"version":"${packageJson.version}"}`);
 				done();
 			}
 		});
@@ -92,7 +92,7 @@ describe('[Express Middleware]', () => {
 				const setHeaderSpyCall = res.setHeader.getCall(0);
 				expect(setHeaderSpyCall.args[0]).to.equal('Cache-Control');
 				expect(setHeaderSpyCall.args[1]).to.equal(`public, max-age=${vapicCustomOptions.permittedAge}`);
-				expect(req.vapicResult).to.equal(`value for ${vapicCustomOptions.cacheVersion}`);
+				expect(req.vapicResult).to.equal('{"version":"99.99.99"}');
 				done();
 			}
 		});
@@ -167,7 +167,7 @@ describe('[Express Middleware]', () => {
 				const setHeaderSpyCall = res.setHeader.getCall(0);
 				expect(setHeaderSpyCall.args[0]).to.equal('Cache-Control');
 				expect(setHeaderSpyCall.args[1]).to.equal(`public, max-age=${defaultPermittedAge}`);
-				expect(req.vapicResult).to.equal(`value for 0.0.6`);
+				expect(req.vapicResult).to.equal('{"version":"0.0.6"}');
 				done();
 			}
 		});
@@ -194,7 +194,7 @@ describe('[Express Middleware]', () => {
 				const setHeaderSpyCall = res.setHeader.getCall(0);
 				expect(setHeaderSpyCall.args[0]).to.equal('Cache-Control');
 				expect(setHeaderSpyCall.args[1]).to.equal(`public, max-age=${defaultPermittedAge}`);
-				expect(req.vapicResult).to.equal(`value for 0.0.4`);
+				expect(req.vapicResult).to.equal('{"version":"0.0.4"}');
 				done();
 			}
 		});
@@ -221,7 +221,7 @@ describe('[Express Middleware]', () => {
 				const setHeaderSpyCall = res.setHeader.getCall(0);
 				expect(setHeaderSpyCall.args[0]).to.equal('Cache-Control');
 				expect(setHeaderSpyCall.args[1]).to.equal(`public, max-age=${defaultPermittedAge}`);
-				expect(req.vapicResult).to.equal(`value for 0.0.4`);
+				expect(req.vapicResult).to.equal('{"version":"0.0.4"}');
 				done();
 			}
 		});
@@ -248,7 +248,7 @@ describe('[Express Middleware]', () => {
 				const setHeaderSpyCall = res.setHeader.getCall(0);
 				expect(setHeaderSpyCall.args[0]).to.equal('Cache-Control');
 				expect(setHeaderSpyCall.args[1]).to.equal(`public, max-age=${defaultPermittedAge}`);
-				expect(req.vapicResult).to.equal(`value for 0.0.2`);
+				expect(req.vapicResult).to.equal('{"version":"0.0.2"}');
 				done();
 			}
 		});
@@ -275,7 +275,7 @@ describe('[Express Middleware]', () => {
 				const setHeaderSpyCall = res.setHeader.getCall(0);
 				expect(setHeaderSpyCall.args[0]).to.equal('Cache-Control');
 				expect(setHeaderSpyCall.args[1]).to.equal(`public, max-age=${defaultPermittedAge}`);
-				expect(req.vapicResult).to.equal(`value for 0.0.2`);
+				expect(req.vapicResult).to.equal('{"version":"0.0.2"}');
 				done();
 			}
 		});

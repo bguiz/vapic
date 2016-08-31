@@ -102,6 +102,15 @@ versionMatchType:: How to determine which version to match. +
   When `exact` (the default), only an exact version match with the current version will be returned. +
 	When `latestUpToCurrent`, the latest version that is less than or equal to the current version will be returned. +
 	Intended for use in conjunction with `.set()` where `versionMatchType=skipWhenSameAsLatest`
+readVersionFromHeader:: If set to true,
+	will read the contents of the `vapic` HTTP request header,
+	and if the `version` property is present,
+	it will use that instead of the specified `cacheVersion`. +
+	This is most useful when there are multiple versions of clients being served by the same server,
+	and each of them needs to lock down their expected responses to a particular version. +
+	The `vapic` HTTP request header's value is expected to be a *base64* encoded JSON string,
+	e.g. `{version:'0.0.1'}` => `'eyJ2ZXJzaW9uIjoiMC4wLjEifQ=='`.
+	Convenience object to JSON conversion utilities are exposed in `vapic.util`.
 permittedAge:: The number of seconds the `Cache-Control` header in the response
   should set its `max-age` to.
   Defaults to `60` (One minute).
