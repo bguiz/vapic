@@ -20,7 +20,7 @@ module.exports = {
 };
 
 function getRedisClient () {
-	return redisClient
+	return redisClient;
 }
 
 function waitForRedis (done) {
@@ -47,8 +47,11 @@ function initRedisClient(done) {
 		});
 }
 
-function clearKeys(keys) {
+function clearKeys(keys, redisClient) {
 	return function clearKeysImpl (done) {
+		if (!redisClient) {
+			redisClient = getRedisClient();
+		}
 		righto.iterate(function* (reject) {
 			let err, result;
 			let key;
@@ -61,8 +64,11 @@ function clearKeys(keys) {
 	}
 }
 
-function setUpKeys (keys) {
+function setUpKeys (keys, redisClient) {
 	return function setUpKeys (done) {
+		if (!redisClient) {
+			redisClient = getRedisClient();
+		}
 		righto.iterate(function* (reject) {
 			let err, result;
 			let key, version;
@@ -70,7 +76,7 @@ function setUpKeys (keys) {
 				key = keys[keyIdx];
 				for (let versionIdx = 0; versionIdx < key.versions.length; ++ versionIdx) {
 					version = key.versions[versionIdx];
-					[err, result] = yield righto.surely(redisClient.hset.bind(redisClient), key.id, version, `value for ${version}`);
+					[err, result] = yield righto.surely(redisClient.hset.bind(redisClient), key.id, version, JSON.stringify({version}));
 					if (err) { reject(err); return; }
 				}
 			}
