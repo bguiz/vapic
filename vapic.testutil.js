@@ -53,11 +53,12 @@ function clearKeys(keys, redisClient) {
 			redisClient = getRedisClient();
 		}
 		righto.iterate(function* (reject) {
-			let err, result;
+			let errResult, err, result;
 			let key;
 			for (let keyIdx = 0; keyIdx < keys.length; ++keyIdx) {
 				key = keys[keyIdx];
-				[err, result] = yield righto.surely(redisClient.del.bind(redisClient), key.id);
+				errResult = yield righto.surely(redisClient.del.bind(redisClient), key.id);
+				err = errResult[0]; result = errResult[1];
 				if (err) { reject(err); return; }
 			}
 		})(done);
@@ -70,13 +71,14 @@ function setUpKeys (keys, redisClient) {
 			redisClient = getRedisClient();
 		}
 		righto.iterate(function* (reject) {
-			let err, result;
+			let errResult, err, result;
 			let key, version;
 			for (let keyIdx = 0; keyIdx < keys.length; ++keyIdx) {
 				key = keys[keyIdx];
 				for (let versionIdx = 0; versionIdx < key.versions.length; ++ versionIdx) {
 					version = key.versions[versionIdx];
-					[err, result] = yield righto.surely(redisClient.hset.bind(redisClient), key.id, version, JSON.stringify({version}));
+					errResult = yield righto.surely(redisClient.hset.bind(redisClient), key.id, version, JSON.stringify({version}));
+					err = errResult[0]; result = errResult[1];
 					if (err) { reject(err); return; }
 				}
 			}
