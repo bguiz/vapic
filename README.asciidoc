@@ -1,7 +1,20 @@
 = `vapic`
-:toc!:
+ifndef::env-github[]
 
-Versioned API Cache
+[View on Github](https://github.com/bguiz/vapic)
+
+endif::[]
+:toc!:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+
+https://github.com/bguiz/vapic[*Versioned API Cache*^]
 
 == Installation
 
@@ -101,7 +114,6 @@ cacheVersion:: Cached version to use.
 versionMatchType:: How to determine which version to match. +
   When `exact` (the default), only an exact version match with the current version will be returned. +
 	When `latestUpToCurrent`, the latest version that is less than or equal to the current version will be returned. +
-	Intended for use in conjunction with `.set()` where `versionMatchType=skipWhenSameAsLatest`
 readVersionFromHeader:: If set to true,
 	will read the contents of the `vapic` HTTP request header,
 	and if the `version` property is present,
@@ -110,7 +122,6 @@ readVersionFromHeader:: If set to true,
 	and each of them needs to lock down their expected responses to a particular version. +
 	The `vapic` HTTP request header's value is expected to be a *base64* encoded JSON string,
 	e.g. `{version:'0.0.1'}` => `'eyJ2ZXJzaW9uIjoiMC4wLjEifQ=='`.
-	Convenience object to JSON conversion utilities are exposed in `vapic.util`.
 permittedAge:: The number of seconds the `Cache-Control` header in the response
   should set its `max-age` to.
   Defaults to `60` (One minute).
@@ -119,6 +130,19 @@ logger:: An object that has an `error` function.
 redisClient:: A Redis client instance.
   Defaults to `require('redis').createClient()`.
 
+[TIP]
+====
+`vapic.expressMiddleware()` where `versionMatchType=latestUpToCurrent` is intended for use in conjunction with
+`vapic.set()` where `versionMatchType=skipWhenSameAsLatest`
+====
+
+[TIP]
+====
+Convenience object to JSON conversion utilities are exposed in `vapic.util`.
+If you wish to import this *without* ``require``-ing all of `vapic`,
+you can also `require('vapic/util.js')` directly.
+====
+
 == Development
 
 If you would like to contribute,
@@ -126,7 +150,10 @@ fork the git repo,
 and create a branch off the *develop* branch,
 and submit your pull request when you are done.
 
+[NOTE]
+====
 This repo uses the *git flow* branching strategy.
+====
 
 To run tests:
 
