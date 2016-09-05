@@ -1,9 +1,9 @@
+= `vapic`
 ifndef::env-github[]
 
 [View on Github](https://github.com/bguiz/vapic)
 
 endif::[]
-= `vapic`
 :toc!:
 ifdef::env-github[]
 :tip-caption: :bulb:
@@ -150,7 +150,7 @@ fork the git repo,
 and create a branch off the *develop* branch,
 and submit your pull request when you are done.
 
-[INFO]
+[NOTE]
 ====
 This repo uses the *git flow* branching strategy.
 ====
