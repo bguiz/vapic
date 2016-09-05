@@ -265,6 +265,42 @@ describe('[Set]', () => {
 			});
 		});
 
+		it('should set value with a newer version after previous was skipped', (done) => {
+			const redisClient = testUtil.getRedisClient();
+			const vapicOptions = {
+				url: '/vapic/mocha/tests/set/forSameDetection',
+				value: 'content newer',
+				cacheVersion: '0.0.10',
+				versionMatchType: 'skipWhenSameAsLatest',
+				redisClient,
+			};
+			vapic.set(vapicOptions, (err, result) => {
+				expect(err).to.not.exist();
+				expect(vapicOptions.cacheKey).to.equal(`vapic:/${vapicOptions.url}`);
+				redisClient.hkeys(vapicOptions.cacheKey, (err2, result2) => {
+					expect(err2).to.not.exist();
+					expect(result2).to.deep.equal(['0.0.2', '0.0.4', '0.0.6', '0.0.8', '0.0.10']);
+					done();
+				});
+			});
+		});
+
+		it('should get the newer version with same content when requesting the current version', (done) => {
+			const redisClient = testUtil.getRedisClient();
+			const vapicOptions = {
+				url: '/vapic/mocha/tests/set/forSameDetection',
+				cacheVersion: '0.0.11',
+				versionMatchType: 'latestUpToCurrent',
+				redisClient,
+			};
+			vapic.get(vapicOptions, (err, result) => {
+				expect(err).to.not.exist();
+				expect(result).to.deep.equal('content newer');
+				expect(vapicOptions.cacheKey).to.equal(`vapic:/${vapicOptions.url}`);
+				done();
+			});
+		});
+
 	});
 
 });
