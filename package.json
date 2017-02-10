@@ -1,8 +1,12 @@
 {
   "name": "vapic",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "Versioned API Cache",
   "main": "vapic.js",
+  "engines": {
+    "node": ">=6.3.1",
+    "yarn": ">=0.19.1"
+  },
   "scripts": {
     "test": "mocha ./vapic.testutil.js './{,!(node_modules)/**/}*.spec.js'"
   },
@@ -24,16 +28,18 @@
   },
   "homepage": "https://github.com/bguiz/vapic#readme",
   "peerDependencies": {
-    "redis": "~2.6.2",
-    "righto": "~1.14.1",
-    "semver": "~5.3.0"
+    "redis": "^2.6.2",
+    "righto": "^1.14.1",
+    "semver": "^5.3.0"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
-    "chai": "~3.5.0",
-    "dirty-chai": "~1.2.2",
-    "mocha": "~3.0.2",
-    "sinon": "~1.17.5"
+    "chai": "^3.5.0",
+    "dirty-chai": "^1.2.2",
+    "mocha": "^3.0.2",
+    "sinon": "^1.17.5"
+  },
+  "resolutions": {
+    "type-detect": "1.0.0"
   }
 }
